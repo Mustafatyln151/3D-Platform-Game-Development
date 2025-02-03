@@ -1,6 +1,7 @@
 ﻿ using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 #endif
 
 /* Note: animations are called via the controller for both the character and capsule using animator null checks
@@ -106,6 +107,19 @@ namespace StarterAssets
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
 
+        Vector3 groundOffset;
+
+        public float currHeight;
+
+        public float lastReachedMostHeight;
+
+        public Renderer rend;
+
+        public LayerMask layerPlatform;
+
+        public float fallingMeter;
+
+
         private const float _threshold = 0.01f;
 
         private bool _hasAnimator;
@@ -134,6 +148,12 @@ namespace StarterAssets
 
         private void Start()
         {
+
+            rend = GetComponent<Renderer>();
+
+            groundOffset = transform.position;
+            lastReachedMostHeight = transform.position.y - groundOffset.y + 2 * rend.bounds.extents.y;
+
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
             
             _hasAnimator = TryGetComponent(out _animator);
@@ -159,7 +179,43 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            calcHeight();
+            isGameOver();
+
         }
+
+        private void calcHeight()
+        {
+
+            currHeight = transform.position.y - groundOffset.y + 2 * rend.bounds.extents.y;
+
+            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 0.15f, layerPlatform))
+            {
+               
+
+                if (currHeight > lastReachedMostHeight)
+                {
+
+                    lastReachedMostHeight = currHeight;
+
+                }
+
+
+            }
+
+        }
+
+        private void isGameOver()
+        {
+            if (lastReachedMostHeight - currHeight > fallingMeter)
+            {
+
+                SceneManager.LoadScene("2gameOver");
+
+            }
+
+        }
+
 
         private void LateUpdate()
         {
